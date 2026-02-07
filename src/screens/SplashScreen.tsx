@@ -1,132 +1,152 @@
 import React, { useEffect, useMemo, useRef } from "react";
-import { View, Text, StyleSheet, Image, Animated, Easing } from "react-native";
+import { Animated, Easing, Image, StyleSheet, Text, View } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
+
 import { RootStackParamList } from "../navigation/types";
 import { colors } from "../theme/colors";
-import { spacing } from "../theme/spacing";
+import { radius, spacing } from "../theme/spacing";
 import { typography } from "../theme/typography";
+import { shadows } from "../theme/shadows";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Splash">;
 
 export default function SplashScreen({ navigation }: Props) {
-  const rotateAnim = useRef(new Animated.Value(0)).current;
-  const pulseAnim = useRef(new Animated.Value(0)).current;
+  const spin = useRef(new Animated.Value(0)).current;
+  const pulse = useRef(new Animated.Value(0)).current;
 
-  const rotate = useMemo(
+  const spinInterpolation = useMemo(
     () =>
-      rotateAnim.interpolate({
+      spin.interpolate({
         inputRange: [0, 1],
         outputRange: ["0deg", "360deg"],
       }),
-    [rotateAnim]
+    [spin]
+  );
+
+  const scaleInterpolation = useMemo(
+    () =>
+      pulse.interpolate({
+        inputRange: [0, 1],
+        outputRange: [1, 1.08],
+      }),
+    [pulse]
   );
 
   useEffect(() => {
-    const rot = Animated.loop(
-      Animated.timing(rotateAnim, {
+    const spinLoop = Animated.loop(
+      Animated.timing(spin, {
         toValue: 1,
-        duration: 900,
+        duration: 1300,
         easing: Easing.linear,
         useNativeDriver: true,
       })
     );
 
-    const pulse = Animated.loop(
+    const pulseLoop = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulseAnim, {
+        Animated.timing(pulse, {
           toValue: 1,
-          duration: 500,
-          easing: Easing.out(Easing.quad),
+          duration: 650,
+          easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
-        Animated.timing(pulseAnim, {
+        Animated.timing(pulse, {
           toValue: 0,
-          duration: 650,
-          easing: Easing.in(Easing.quad),
+          duration: 700,
+          easing: Easing.in(Easing.cubic),
           useNativeDriver: true,
         }),
       ])
     );
 
-    rot.start();
-    pulse.start();
+    spinLoop.start();
+    pulseLoop.start();
 
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       navigation.replace("Login");
-    }, 3000);
+    }, 2600);
 
     return () => {
-      clearTimeout(t);
-      rot.stop();
-      pulse.stop();
+      clearTimeout(timer);
+      spinLoop.stop();
+      pulseLoop.stop();
     };
-  }, [navigation, rotateAnim, pulseAnim]);
-
-  const pulseScale = pulseAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1, 1.08],
-  });
-
-  const pulseOpacity = pulseAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.6, 1],
-  });
+  }, [navigation, pulse, spin]);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.center}>
+    <LinearGradient colors={[colors.bg, colors.bgSoft]} style={styles.container}>
+      <View style={styles.glow} />
+      <View style={styles.content}>
         <Image
           source={require("../../assets/logo.png")}
           style={styles.logo}
           resizeMode="contain"
         />
-
         <Text style={styles.brand}>Titan Fit</Text>
-        <Text style={styles.tagline}>Train smart. Lift strong.</Text>
+        <Text style={styles.tagline}>Build strength with focused training.</Text>
 
-        <Animated.View
-          style={[
-            styles.loaderWrap,
-            { transform: [{ scale: pulseScale }], opacity: pulseOpacity },
-          ]}
-        >
-          <Animated.View style={{ transform: [{ rotate }] }}>
-            <Ionicons name="barbell" size={28} color={colors.primary2} />
+        <Animated.View style={[styles.loader, { transform: [{ scale: scaleInterpolation }] }]}>
+          <Animated.View style={{ transform: [{ rotate: spinInterpolation }] }}>
+            <Ionicons name="barbell" size={22} color={colors.accent} />
           </Animated.View>
-          <Text style={styles.loadingText}>Loading</Text>
+          <Text style={styles.loaderText}>Preparing your dashboard</Text>
         </Animated.View>
       </View>
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
-  center: {
+  container: {
+    flex: 1,
+  },
+  glow: {
+    position: "absolute",
+    top: -100,
+    left: -40,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: "rgba(27, 154, 170, 0.26)",
+  },
+  content: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: spacing.xl,
+    gap: spacing.sm,
   },
-  logo: { width: 120, height: 120, marginBottom: spacing.lg },
-  brand: { ...typography.title, color: colors.text, marginTop: spacing.sm },
+  logo: {
+    width: 122,
+    height: 122,
+    marginBottom: spacing.xs,
+  },
+  brand: {
+    ...typography.display,
+    color: colors.text,
+  },
   tagline: {
-    ...typography.body,
+    ...typography.caption,
     color: colors.muted,
-    marginTop: spacing.xs,
-    marginBottom: spacing.xl,
+    textAlign: "center",
   },
-  loaderWrap: {
+  loader: {
+    marginTop: spacing.lg,
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: spacing.sm,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
-    borderRadius: 999,
-    backgroundColor: "rgba(124, 92, 255, 0.12)",
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: "rgba(45, 226, 230, 0.20)",
+    borderColor: colors.border,
+    ...shadows.md,
   },
-  loadingText: { ...typography.body, color: colors.text },
+  loaderText: {
+    ...typography.caption,
+    color: colors.text,
+  },
 });

@@ -1,32 +1,27 @@
 import React, { useMemo, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  Pressable,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Image,
+  Pressable,
   ScrollView,
-  LayoutAnimation,
-  UIManager,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+
 import { RootStackParamList } from "../navigation/types";
-import { colors } from "../theme/colors";
-import { spacing } from "../theme/spacing";
-import { typography } from "../theme/typography";
 import { login } from "../services/auth";
 import { saveUser } from "../services/storage";
-
-// Enable LayoutAnimation for Android
-if (Platform.OS === 'android') {
-  if (UIManager.setLayoutAnimationEnabledExperimental) {
-    UIManager.setLayoutAnimationEnabledExperimental(true);
-  }
-}
+import { isValidEmail } from "../utils/validators";
+import { colors } from "../theme/colors";
+import { radius, spacing } from "../theme/spacing";
+import { typography } from "../theme/typography";
+import { shadows } from "../theme/shadows";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Login">;
 
@@ -34,369 +29,234 @@ export default function LoginScreen({ navigation }: Props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [focusedInput, setFocusedInput] = useState<"email" | "password" | null>(null);
-
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const canSubmit = useMemo(() => {
-    return email.trim().length > 0 && password.length > 0 && !loading;
-  }, [email, password, loading]);
+    return isValidEmail(email) && password.trim().length >= 4 && !loading;
+  }, [email, loading, password]);
 
   async function onSubmit() {
-    setError(null);
-    try {
-      setLoading(true);
-      const data = await login(email, password);
+    if (!canSubmit) {
+      setError("Enter a valid email and password.");
+      return;
+    }
 
-      if (!data.success || !data.user) {
-        setError(data.message || "Login failed.");
+    setError(null);
+    setLoading(true);
+    try {
+      const response = await login(email.trim(), password);
+      if (!response.success || !response.user) {
+        setError(response.message || "Unable to login.");
         return;
       }
-
-      await saveUser(data.user);
-      navigation.replace("Dashboard", { email: data.user.email });
-    } catch (err: any) {
-      const msg =
-        err?.response?.data?.message ||
-        err?.response?.data?.detail ||
+      await saveUser(response.user);
+      navigation.replace("Main");
+    } catch (e: any) {
+      const message =
+        e?.response?.data?.message ||
+        e?.response?.data?.detail ||
         "Something went wrong. Please try again.";
-      setError(String(msg));
+      setError(String(message));
     } finally {
       setLoading(false);
     }
   }
 
-  // Helper to handle focus styles
-  const handleFocus = (field: "email" | "password") => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setFocusedInput(field);
-  };
-
-  const handleBlur = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setFocusedInput(null);
-  };
-
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.select({ ios: "padding", android: undefined })}
-    >
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent} 
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+    <LinearGradient colors={[colors.bg, colors.bgSoft]} style={styles.container}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.select({ ios: "padding", android: undefined })}
       >
-        {/* Brand Section */}
-        <View style={styles.brandSection}>
-          {/* Placeholder for Logo - Replace with <Image source={...} /> */}
-          {/* <View style={styles.logoPlaceholder}> */}
-            {/* <Text style={styles.logoText}>A</Text> */}
-          {/* </View> */}
-          <Image 
-    source={require("../../assets/logo.png")} 
-    style={styles.logo} 
-    resizeMode="contain" 
-  />
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.sub}>Sign in to continue your progress</Text>
-        </View>
-
-        {/* Form Section */}
-        <View style={styles.formSection}>
-          
-          {/* Email Input */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email Address</Text>
-            <View 
-              style={[
-                styles.inputContainer, 
-                focusedInput === "email" && styles.inputContainerActive,
-                error ? styles.inputErrorBorder : null
-              ]}
-            >
-              <TextInput
-                value={email}
-                onChangeText={(t) => {
-                    setEmail(t);
-                    if(error) setError(null);
-                }}
-                onFocus={() => handleFocus("email")}
-                onBlur={handleBlur}
-                placeholder="name@work.com"
-                placeholderTextColor={colors.muted}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                style={styles.input}
-                editable={!loading}
-              />
-            </View>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.hero}>
+            <Text style={styles.title}>Welcome Back</Text>
+            <Text style={styles.subtitle}>Login to continue your training plan.</Text>
           </View>
 
-          {/* Password Input */}
-          <View style={styles.inputGroup}>
-            <View style={styles.labelRow}>
+          <View style={styles.card}>
+            <View style={styles.field}>
+              <Text style={styles.label}>Email</Text>
+              <View style={styles.inputWrap}>
+                <Ionicons name="mail-outline" size={18} color={colors.muted} />
+                <TextInput
+                  value={email}
+                  onChangeText={(value) => {
+                    setEmail(value);
+                    if (error) setError(null);
+                  }}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  placeholder="name@example.com"
+                  placeholderTextColor={colors.muted}
+                  style={styles.input}
+                  editable={!loading}
+                />
+              </View>
+            </View>
+
+            <View style={styles.field}>
               <Text style={styles.label}>Password</Text>
-              <Pressable onPress={() => console.log("Navigate to Forgot PW")}>
-                <Text style={styles.forgotPass}>Forgot password?</Text>
-              </Pressable>
+              <View style={styles.inputWrap}>
+                <Ionicons name="lock-closed-outline" size={18} color={colors.muted} />
+                <TextInput
+                  value={password}
+                  onChangeText={(value) => {
+                    setPassword(value);
+                    if (error) setError(null);
+                  }}
+                  secureTextEntry={!showPassword}
+                  placeholder="Enter your password"
+                  placeholderTextColor={colors.muted}
+                  style={styles.input}
+                  editable={!loading}
+                />
+                <Pressable
+                  onPress={() => setShowPassword((current) => !current)}
+                  hitSlop={10}
+                  style={styles.iconButton}
+                >
+                  <Ionicons
+                    name={showPassword ? "eye-off-outline" : "eye-outline"}
+                    size={18}
+                    color={colors.muted}
+                  />
+                </Pressable>
+              </View>
             </View>
-            
-            <View 
-              style={[
-                styles.inputContainer, 
-                focusedInput === "password" && styles.inputContainerActive,
-                error ? styles.inputErrorBorder : null
+
+            {error ? (
+              <View style={styles.errorBox}>
+                <Ionicons name="alert-circle" size={18} color={colors.danger} />
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            ) : null}
+
+            <Pressable
+              onPress={onSubmit}
+              disabled={!canSubmit}
+              style={({ pressed }) => [
+                styles.submit,
+                !canSubmit && styles.submitDisabled,
+                pressed && canSubmit && styles.submitPressed,
               ]}
             >
-              <TextInput
-                value={password}
-                onChangeText={(t) => {
-                    setPassword(t);
-                    if(error) setError(null);
-                }}
-                onFocus={() => handleFocus("password")}
-                onBlur={handleBlur}
-                placeholder="Enter your password"
-                placeholderTextColor={colors.muted}
-                secureTextEntry={!showPassword}
-                style={styles.input}
-                editable={!loading}
-              />
-              <Pressable 
-                onPress={() => setShowPassword(!showPassword)}
-                style={styles.eyeIcon}
-                hitSlop={10}
-              >
-                {/* Simple text representation of icon. Replace with actual Icon library like lucide-react-native */}
-                <Text style={{color: colors.muted, fontSize: 12, fontWeight: '600'}}>
-                    {showPassword ? "HIDE" : "SHOW"}
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-
-          {/* Error Message */}
-          {error ? (
-            <View style={styles.errorContainer}>
-               <Text style={styles.errorText}>{error}</Text>
-            </View>
-          ) : null}
-
-          {/* Submit Button */}
-          <Pressable
-            onPress={onSubmit}
-            disabled={!canSubmit}
-            style={({ pressed }) => [
-              styles.button,
-              !canSubmit && styles.buttonDisabled,
-              pressed && canSubmit && styles.buttonPressed,
-            ]}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Log In</Text>
-            )}
-          </Pressable>
-
-          {/* Footer - Sign Up */}
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>Don't have an account? </Text>
-            <Pressable onPress={() => console.log("Nav to Sign Up")}>
-              <Text style={styles.linkText}>Sign up</Text>
+              {loading ? (
+                <ActivityIndicator color={colors.text} />
+              ) : (
+                <Text style={styles.submitText}>Log In</Text>
+              )}
             </Pressable>
-          </View>
 
-          {/* Dev Hint (Optional - keep small) */}
-          <Text style={styles.hint}>
-             v1.0.0 • Production Build
-          </Text>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+            <Text style={styles.hint}>Use your registered account from the backend API.</Text>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.bg, // Assuming dark background based on your original colors
   },
-  scrollContent: {
+  content: {
     flexGrow: 1,
+    justifyContent: "center",
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.xxl,
-    paddingBottom: spacing.xl,
-    justifyContent: 'center',
+    paddingVertical: spacing.xl,
   },
-  
-  // Brand
-  // brandSection: {
-  //   alignItems: 'center',
-  //   marginBottom: spacing.xxl,
-  // },
-  // logoPlaceholder: {
-  //   width: 64,
-  //   height: 64,
-  //   backgroundColor: colors.primary,
-  //   borderRadius: 18,
-  //   alignItems: 'center',
-  //   justifyContent: 'center',
-  //   marginBottom: spacing.lg,
-  //   shadowColor: colors.primary,
-  //   shadowOffset: { width: 0, height: 4 },
-  //   shadowOpacity: 0.3,
-  //   shadowRadius: 10,
-  //   elevation: 8,
-  // },
-  // logoText: {
-  //   fontSize: 32,
-  //   fontWeight: 'bold',
-  //   color: '#fff',
-  // },
-  brandSection: {
-    alignItems: 'center',
-    marginBottom: spacing.xxl,
-  },
-  
-  // NEW STYLE: Adjust width/height to match your logo's aspect ratio
-  logo: {
-    width: 120,    // Wider to fit a typical logo
-    height: 120,   // Adjust height as needed
-    marginBottom: spacing.lg,
+  hero: {
+    marginBottom: spacing.xl,
   },
   title: {
-    ...typography.title,
-    fontSize: 28,
+    ...typography.display,
     color: colors.text,
-    textAlign: 'center',
-    marginBottom: spacing.xs,
   },
-  sub: {
+  subtitle: {
     ...typography.body,
     color: colors.muted,
-    textAlign: 'center',
+    marginTop: spacing.xs,
   },
-
-  // Form
-  formSection: {
-    width: '100%',
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    gap: spacing.md,
+    ...shadows.lg,
   },
-  inputGroup: {
-    marginBottom: spacing.lg,
-  },
-  labelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
+  field: {
+    gap: spacing.xs,
   },
   label: {
-    ...typography.small,
+    ...typography.caption,
     color: colors.text,
-    fontWeight: '600',
-    marginBottom: spacing.sm,
   },
-  forgotPass: {
-    ...typography.small,
-    color: colors.primary,
-    fontWeight: '600',
-  },
-  
-  // Input Styling
-  inputContainer: {
-    height: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: "rgba(255,255,255,0.05)", // Glass effect
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: "transparent",
-    paddingHorizontal: spacing.md,
-  },
-  inputContainerActive: {
-    borderColor: colors.primary,
-    backgroundColor: "rgba(255,255,255,0.08)",
-  },
-  inputErrorBorder: {
-    borderColor: colors.danger,
+  inputWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    backgroundColor: colors.card,
+    paddingHorizontal: spacing.sm,
+    minHeight: 52,
+    gap: spacing.xs,
   },
   input: {
     flex: 1,
-    height: '100%',
     color: colors.text,
-    fontSize: 16,
+    fontSize: 15,
+    paddingVertical: spacing.sm,
   },
-  eyeIcon: {
+  iconButton: {
+    padding: spacing.xxs,
+  },
+  errorBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: "rgba(238, 99, 82, 0.45)",
+    backgroundColor: "rgba(238, 99, 82, 0.12)",
     padding: spacing.sm,
   },
-
-  // Error
-  errorContainer: {
-    backgroundColor: 'rgba(255, 59, 48, 0.1)', // Light red background
-    padding: spacing.md,
-    borderRadius: 12,
-    marginBottom: spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   errorText: {
-    color: colors.danger,
-    ...typography.body,
-    fontSize: 14,
+    flex: 1,
+    ...typography.caption,
+    color: colors.text,
   },
-
-  // Button
-  button: {
-    height: 58,
-    borderRadius: 18,
+  submit: {
+    minHeight: 54,
+    borderRadius: radius.md,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.primary,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 4,
-    marginBottom: spacing.xl,
+    ...shadows.md,
   },
-  buttonDisabled: {
-    opacity: 0.6,
-    shadowOpacity: 0,
+  submitDisabled: {
+    opacity: 0.5,
   },
-  buttonPressed: {
+  submitPressed: {
     opacity: 0.9,
-    transform: [{ scale: 0.98 }],
   },
-  buttonText: {
-    color: "#fff", // Force white for primary buttons usually
-    fontSize: 17,
+  submitText: {
+    color: colors.text,
+    fontSize: 16,
     fontWeight: "700",
-    letterSpacing: 0.5,
-  },
-
-  // Footer
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.xl,
-  },
-  footerText: {
-    ...typography.body,
-    color: colors.muted,
-  },
-  linkText: {
-    ...typography.body,
-    color: colors.primary,
-    fontWeight: '700',
+    letterSpacing: 0.2,
   },
   hint: {
-    textAlign: 'center',
-    color: "rgba(255,255,255,0.2)",
-    fontSize: 10,
-    fontFamily: Platform.select({ ios: "Menlo", android: "monospace" }),
+    ...typography.small,
+    color: colors.muted,
+    textAlign: "center",
   },
 });

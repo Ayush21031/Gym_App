@@ -2,8 +2,9 @@ import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import SplashScreen from "../screens/SplashScreen";
 import LoginScreen from "../screens/LoginScreen";
-import DashboardScreen from "../screens/DashboardScreen";
+import MainShell from "../screens/MainShell";
 import { RootStackParamList } from "./types";
+import ProfileScreen from "../screens/ProfileScreen";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -11,10 +12,7 @@ export default function AppNavigator() {
   return (
     <Stack.Navigator
       initialRouteName="Splash"
-      screenOptions={{
-        headerShown: false,
-        animation: "fade", // smooth transition
-      }}
+      screenOptions={{ headerShown: false, animation: "fade" }}
     >
       <Stack.Screen name="Splash" component={SplashScreen} />
       <Stack.Screen
@@ -22,10 +20,11 @@ export default function AppNavigator() {
         component={LoginScreen}
         options={{ animation: "slide_from_right" }}
       />
+      <Stack.Screen name="Main" component={MainShell} options={{ animation: "fade" }} />
       <Stack.Screen
-        name="Dashboard"
-        component={DashboardScreen}
-        options={{ animation: "fade" }}
+        name="Profile"
+        component={ProfileScreen}
+        options={{ animation: "slide_from_right" }}
       />
     </Stack.Navigator>
   );

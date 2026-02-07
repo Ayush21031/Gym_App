@@ -1,5 +1,6 @@
 export type RootStackParamList = {
   Splash: undefined;
   Login: undefined;
-  Dashboard: { email?: string } | undefined;
+  Main: undefined;
+  Profile: undefined;
 };
