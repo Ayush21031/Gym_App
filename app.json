@@ -28,7 +28,14 @@
     },
     "plugins": [
       "expo-font",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Allow Titan Fit to record your face verification video.",
+          "microphonePermission": "Allow Titan Fit to capture audio while recording verification video."
+        }
+      ]
     ]
   }
 }

@@ -194,6 +194,11 @@ export default function WorkoutScreen() {
     };
   }, [sessions]);
 
+  const focusScore = useMemo(
+    () => Math.min(100, Math.round(summary.validPct * 0.72 + Math.min(summary.sessions * 9, 28))),
+    [summary.sessions, summary.validPct]
+  );
+
   const exerciseMap = useMemo(() => {
     const map = new Map<string, SetView[]>();
     sessions.forEach((session) => {
@@ -359,7 +364,7 @@ export default function WorkoutScreen() {
       backgroundGradientFrom: "transparent",
       backgroundGradientTo: "transparent",
       decimalPlaces: 0,
-      color: (o = 1) => `rgba(27,154,170,${o})`,
+      color: (o = 1) => `rgba(240,51,24,${o})`,
       labelColor: (o = 1) => `rgba(242,247,251,${o})`,
       propsForDots: { r: "4", strokeWidth: "2", stroke: colors.accent },
       propsForBackgroundLines: { stroke: "rgba(168,190,207,0.18)" },
@@ -371,7 +376,9 @@ export default function WorkoutScreen() {
   const exerciseChartWidth = Math.max(width - spacing.lg * 2, (insights?.topExerciseLabels.length ?? 0) * 70);
 
   return (
-    <LinearGradient colors={[colors.bg, colors.bgSoft]} style={styles.container}>
+    <LinearGradient colors={[colors.bg, "#17161D", colors.bgSoft]} style={styles.container}>
+      <View style={[styles.glow, styles.glowOne]} />
+      <View style={[styles.glow, styles.glowTwo]} />
       <Animated.View style={[styles.header, { opacity: enter, transform: [{ translateY: rise }] }]}>
         <View>
           <Text style={styles.title}>Workout</Text>
@@ -413,6 +420,22 @@ export default function WorkoutScreen() {
           <MetricCard label="Sets" value={String(summary.sets)} />
           <MetricCard label="Reps" value={String(summary.reps)} />
           <MetricCard label="Valid Reps" value={`${summary.validPct}%`} />
+        </View>
+
+        <View style={styles.focusCard}>
+          <View style={styles.focusHeader}>
+            <Text style={styles.focusTitle}>Readiness Score</Text>
+            <View style={styles.focusBadge}>
+              <Text style={styles.focusBadgeText}>{focusScore}%</Text>
+            </View>
+          </View>
+          <Text style={styles.focusSubtitle}>Form quality + session consistency for selected day.</Text>
+          <View style={styles.focusRow}>
+            <MiniMetric label="Calories" value={`${summary.calories}`} />
+            <MiniMetric label="Sessions" value={`${summary.sessions}`} />
+            <MiniMetric label="Reps" value={`${summary.reps}`} />
+            <MiniMetric label="Valid" value={`${summary.validPct}%`} />
+          </View>
         </View>
 
         {loading ? (
@@ -690,6 +713,24 @@ function MiniMetric({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   modal: { flex: 1 },
+  glow: {
+    position: "absolute",
+    borderRadius: radius.pill,
+  },
+  glowOne: {
+    top: -180,
+    right: -140,
+    width: 320,
+    height: 320,
+    backgroundColor: "rgba(240, 51, 24, 0.22)",
+  },
+  glowTwo: {
+    bottom: -170,
+    left: -130,
+    width: 300,
+    height: 300,
+    backgroundColor: "rgba(247, 213, 167, 0.14)",
+  },
   header: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
@@ -709,7 +750,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surface,
+    backgroundColor: "rgba(35, 34, 41, 0.88)",
     alignItems: "center",
     justifyContent: "center",
     ...shadows.sm,
@@ -718,8 +759,8 @@ const styles = StyleSheet.create({
     minHeight: 40,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: "rgba(126,217,87,0.45)",
-    backgroundColor: colors.primary,
+    borderColor: "rgba(240, 51, 24, 0.45)",
+    backgroundColor: colors.primaryStrong,
     paddingHorizontal: spacing.md,
     flexDirection: "row",
     alignItems: "center",
@@ -737,7 +778,7 @@ const styles = StyleSheet.create({
   },
   metricCard: {
     width: "48%",
-    backgroundColor: colors.surface,
+    backgroundColor: "rgba(35, 34, 41, 0.92)",
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
@@ -746,6 +787,47 @@ const styles = StyleSheet.create({
   },
   metricLabel: { ...typography.small, color: colors.muted },
   metricValue: { ...typography.h3, color: colors.text, marginTop: spacing.xxs },
+  focusCard: {
+    backgroundColor: "rgba(35, 34, 41, 0.94)",
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.sm,
+    marginBottom: spacing.lg,
+    ...shadows.md,
+  },
+  focusHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  focusTitle: {
+    ...typography.h3,
+    color: colors.text,
+  },
+  focusBadge: {
+    borderWidth: 1,
+    borderColor: "rgba(247, 213, 167, 0.44)",
+    backgroundColor: "rgba(247, 213, 167, 0.14)",
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs,
+  },
+  focusBadgeText: {
+    ...typography.small,
+    color: colors.accent,
+  },
+  focusSubtitle: {
+    ...typography.small,
+    color: colors.muted,
+    marginTop: spacing.xxs,
+  },
+  focusRow: {
+    marginTop: spacing.sm,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.xs,
+  },
 
   section: {
     ...typography.h3,
@@ -754,7 +836,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   card: {
-    backgroundColor: colors.surface,
+    backgroundColor: "rgba(35, 34, 41, 0.92)",
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
@@ -775,12 +857,12 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surface,
+    backgroundColor: "rgba(35, 34, 41, 0.9)",
     paddingHorizontal: spacing.md,
     alignItems: "center",
     justifyContent: "center",
   },
-  tabActive: { borderColor: "rgba(27,154,170,0.75)", backgroundColor: colors.cardAlt },
+  tabActive: { borderColor: "rgba(240, 51, 24, 0.68)", backgroundColor: colors.cardAlt },
   tabText: { ...typography.caption, color: colors.muted },
   tabTextActive: { color: colors.text },
 
@@ -789,11 +871,11 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surface,
+    backgroundColor: "rgba(35, 34, 41, 0.9)",
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
   },
-  setTabActive: { borderColor: "rgba(27,154,170,0.75)", backgroundColor: colors.cardAlt },
+  setTabActive: { borderColor: "rgba(240, 51, 24, 0.68)", backgroundColor: colors.cardAlt },
   setTitle: { ...typography.caption, color: colors.muted },
   setTitleActive: { color: colors.text },
   setMeta: { ...typography.small, color: colors.muted, marginTop: spacing.xxs },
@@ -807,7 +889,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.card,
+    backgroundColor: "rgba(44, 43, 51, 0.9)",
     padding: spacing.sm,
   },
   repTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
@@ -821,7 +903,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surface,
+    backgroundColor: "rgba(35, 34, 41, 0.95)",
     paddingHorizontal: spacing.xs,
     paddingVertical: spacing.xs,
   },
@@ -838,7 +920,7 @@ const styles = StyleSheet.create({
   },
 
   chartCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: "rgba(35, 34, 41, 0.92)",
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
@@ -849,7 +931,7 @@ const styles = StyleSheet.create({
   chart: { borderRadius: radius.md },
 
   stateCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: "rgba(35, 34, 41, 0.92)",
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,

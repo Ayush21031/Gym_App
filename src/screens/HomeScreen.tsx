@@ -22,49 +22,65 @@ const goals = [
   { label: "Steps", value: "7.4K", target: "9K", icon: "walk-outline" },
 ];
 
+const highlights = [
+  { label: "Weekly Streak", value: "6 days", detail: "2 more to beat best", icon: "flash-outline" },
+  { label: "Avg Form Score", value: "91%", detail: "High control this week", icon: "barbell-outline" },
+];
+
 const tasks = [
-  { title: "Strength workout", detail: "Upper body - 45 min", icon: "barbell-outline" },
-  { title: "Mobility reset", detail: "10 min recovery flow", icon: "body-outline" },
-  { title: "Meal check-in", detail: "Log protein intake", icon: "restaurant-outline" },
+  { title: "Strength workout", detail: "Upper body / 45 min", icon: "barbell-outline" },
+  { title: "Mobility reset", detail: "Recovery flow / 12 min", icon: "body-outline" },
+  { title: "Meal check-in", detail: "Protein target tracking", icon: "restaurant-outline" },
 ];
 
 export default function HomeScreen() {
   const navigation = useNavigation<Navigation>();
 
   return (
-    <LinearGradient colors={[colors.bg, colors.bgSoft]} style={styles.container}>
+    <LinearGradient colors={[colors.bg, "#17161D", colors.bgSoft]} style={styles.container}>
+      <View style={[styles.glow, styles.glowOne]} />
+      <View style={[styles.glow, styles.glowTwo]} />
+
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>Good Evening</Text>
-            <Text style={styles.title}>Performance Dashboard</Text>
+            <Text style={styles.title}>Titan Dashboard</Text>
           </View>
-          <Pressable
-            onPress={() => navigation.navigate("Profile")}
-            style={({ pressed }) => [styles.profileButton, pressed && styles.pressed]}
-          >
-            <Image source={avatar} style={styles.avatar} />
-          </Pressable>
-        </View>
-
-        <View style={styles.hero}>
-          <Image source={banner} style={styles.heroImage} />
-          <View style={styles.heroOverlay} />
-          <View style={styles.heroContent}>
-            <Text style={styles.heroLabel}>Daily Focus</Text>
-            <Text style={styles.heroTitle}>Build consistency with intentional sessions.</Text>
-            <Pressable style={({ pressed }) => [styles.heroButton, pressed && styles.pressed]}>
-              <Ionicons name="play-circle-outline" size={18} color={colors.text} />
-              <Text style={styles.heroButtonText}>Start Quick Workout</Text>
+          <View style={styles.headerActions}>
+            <Pressable style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}>
+              <Ionicons name="notifications-outline" size={18} color={colors.text} />
+            </Pressable>
+            <Pressable
+              onPress={() => navigation.navigate("Profile")}
+              style={({ pressed }) => [styles.profileButton, pressed && styles.pressed]}
+            >
+              <Image source={avatar} style={styles.avatar} />
             </Pressable>
           </View>
         </View>
 
-        <SectionTitle title="Today" />
+        <View style={styles.hero}>
+          <Image source={banner} style={styles.heroImage} />
+          <LinearGradient colors={["rgba(17,17,19,0)", "rgba(17,17,19,0.94)"]} style={styles.heroFade} />
+          <View style={styles.heroContent}>
+            <Text style={styles.heroTag}>Today Plan</Text>
+            <Text style={styles.heroTitle}>Power Lift Cycle</Text>
+            <Text style={styles.heroSubtitle}>3 sessions left to complete this week’s target.</Text>
+            <Pressable style={({ pressed }) => [styles.heroButton, pressed && styles.pressed]}>
+              <Ionicons name="play" size={16} color={colors.text} />
+              <Text style={styles.heroButtonText}>Start Session</Text>
+            </Pressable>
+          </View>
+        </View>
+
+        <SectionTitle title="Performance Snapshot" />
         <View style={styles.metricGrid}>
           {goals.map((item) => (
             <View key={item.label} style={styles.metricCard}>
-              <Ionicons name={item.icon as any} size={18} color={colors.accent} />
+              <View style={styles.metricIconWrap}>
+                <Ionicons name={item.icon as any} size={16} color={colors.accent} />
+              </View>
               <Text style={styles.metricLabel}>{item.label}</Text>
               <Text style={styles.metricValue}>{item.value}</Text>
               <Text style={styles.metricHint}>Target {item.target}</Text>
@@ -72,12 +88,28 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        <SectionTitle title="Planned Tasks" />
+        <SectionTitle title="Momentum" />
+        <View style={styles.highlightList}>
+          {highlights.map((item) => (
+            <View key={item.label} style={styles.highlightCard}>
+              <View style={styles.highlightIcon}>
+                <Ionicons name={item.icon as any} size={16} color={colors.primary} />
+              </View>
+              <View style={styles.highlightText}>
+                <Text style={styles.highlightLabel}>{item.label}</Text>
+                <Text style={styles.highlightValue}>{item.value}</Text>
+                <Text style={styles.highlightDetail}>{item.detail}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+
+        <SectionTitle title="Today Focus" />
         <View style={styles.list}>
           {tasks.map((task) => (
             <Pressable key={task.title} style={({ pressed }) => [styles.listRow, pressed && styles.pressed]}>
               <View style={styles.listIcon}>
-                <Ionicons name={task.icon as any} size={18} color={colors.primary} />
+                <Ionicons name={task.icon as any} size={18} color={colors.text} />
               </View>
               <View style={styles.listText}>
                 <Text style={styles.listTitle}>{task.title}</Text>
@@ -100,16 +132,39 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  glow: {
+    position: "absolute",
+    borderRadius: radius.pill,
+  },
+  glowOne: {
+    top: -170,
+    right: -120,
+    width: 340,
+    height: 340,
+    backgroundColor: "rgba(240, 51, 24, 0.22)",
+  },
+  glowTwo: {
+    left: -140,
+    bottom: -180,
+    width: 320,
+    height: 320,
+    backgroundColor: "rgba(247, 213, 167, 0.16)",
+  },
   content: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
-    paddingBottom: spacing.xl,
+    paddingBottom: spacing.xxl,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: spacing.lg,
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
   },
   greeting: {
     ...typography.small,
@@ -120,18 +175,29 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginTop: spacing.xxs,
   },
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: "rgba(35, 34, 41, 0.85)",
+    alignItems: "center",
+    justifyContent: "center",
+    ...shadows.sm,
+  },
   profileButton: {
     borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surface,
+    backgroundColor: "rgba(35, 34, 41, 0.85)",
     padding: spacing.xxs,
     ...shadows.sm,
   },
   avatar: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
   },
   hero: {
     borderRadius: radius.lg,
@@ -143,35 +209,41 @@ const styles = StyleSheet.create({
   },
   heroImage: {
     width: "100%",
-    height: 190,
+    height: 220,
   },
-  heroOverlay: {
+  heroFade: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.overlay,
   },
   heroContent: {
     position: "absolute",
     left: spacing.md,
     right: spacing.md,
     bottom: spacing.md,
-    gap: spacing.sm,
   },
-  heroLabel: {
+  heroTag: {
     ...typography.small,
     color: colors.accent,
     textTransform: "uppercase",
+    letterSpacing: 0.6,
   },
   heroTitle: {
-    ...typography.h3,
+    ...typography.h2,
     color: colors.text,
+    marginTop: spacing.xxs,
+  },
+  heroSubtitle: {
+    ...typography.caption,
+    color: colors.muted,
+    marginTop: spacing.xxs,
   },
   heroButton: {
     alignSelf: "flex-start",
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.xs,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryStrong,
     borderRadius: radius.md,
+    marginTop: spacing.sm,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
   },
@@ -191,12 +263,20 @@ const styles = StyleSheet.create({
   },
   metricCard: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: "rgba(35, 34, 41, 0.92)",
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
     padding: spacing.sm,
     ...shadows.md,
+  },
+  metricIconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "rgba(247, 213, 167, 0.14)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   metricLabel: {
     ...typography.small,
@@ -213,13 +293,53 @@ const styles = StyleSheet.create({
     color: colors.muted,
     marginTop: spacing.xxs,
   },
+  highlightList: {
+    gap: spacing.sm,
+    marginBottom: spacing.xl,
+  },
+  highlightCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    backgroundColor: "rgba(35, 34, 41, 0.92)",
+    padding: spacing.sm,
+    ...shadows.sm,
+  },
+  highlightIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(240, 51, 24, 0.14)",
+    marginRight: spacing.sm,
+  },
+  highlightText: {
+    flex: 1,
+  },
+  highlightLabel: {
+    ...typography.small,
+    color: colors.muted,
+  },
+  highlightValue: {
+    ...typography.caption,
+    color: colors.text,
+    marginTop: spacing.xxs,
+  },
+  highlightDetail: {
+    ...typography.small,
+    color: colors.accent,
+    marginTop: spacing.xxs,
+  },
   list: {
     gap: spacing.sm,
   },
   listRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.surface,
+    backgroundColor: "rgba(35, 34, 41, 0.92)",
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
@@ -230,7 +350,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: colors.cardAlt,
+    backgroundColor: "rgba(240, 51, 24, 0.28)",
     alignItems: "center",
     justifyContent: "center",
     marginRight: spacing.sm,
@@ -248,6 +368,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.xxs,
   },
   pressed: {
-    opacity: 0.92,
+    opacity: 0.9,
   },
 });

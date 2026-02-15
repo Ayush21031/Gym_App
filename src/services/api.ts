@@ -11,10 +11,10 @@ import { NativeModules, Platform } from "react-native";
  */
 const FALLBACK_BASE_URL =
   Platform.select({
-    android: "http://192.168.0.104:8000",
+    android: "http://35.209.207.47:8000",
     ios: "http://localhost:8000",
-    default: "http://localhost:8000",
-  }) ?? "http://localhost:8000";
+    default: "http://35.209.207.47:8000",
+  }) ?? "http://35.209.207.47:8000";
 
 function normalizeBaseUrl(url: string) {
   return url.endsWith("/") ? url.slice(0, -1) : url;
@@ -47,7 +47,9 @@ function getInferredBaseUrl() {
   return FALLBACK_BASE_URL;
 }
 
-const BASE_URL = normalizeBaseUrl(process.env.EXPO_PUBLIC_API_URL || getInferredBaseUrl());
+export const BASE_URL = normalizeBaseUrl(
+  process.env.EXPO_PUBLIC_API_URL || getInferredBaseUrl()
+);
 
 if (__DEV__) {
   // Helps verify what URL is being used on web / emulator / physical device.

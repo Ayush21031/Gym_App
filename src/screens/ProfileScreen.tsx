@@ -6,7 +6,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
 
 import { RootStackParamList } from "../navigation/types";
-import { clearUser, getUser } from "../services/storage";
+import { clearAuthStorage, getUser } from "../services/storage";
 import { colors } from "../theme/colors";
 import { radius, spacing } from "../theme/spacing";
 import { typography } from "../theme/typography";
@@ -29,6 +29,12 @@ type User = {
 
 const avatar = require("../../assets/profile_avatar.png");
 
+const quickStats = [
+  { label: "Weekly Workouts", value: "5" },
+  { label: "Form Average", value: "91%" },
+  { label: "Streak", value: "6 days" },
+];
+
 export default function ProfileScreen() {
   const navigation = useNavigation<Navigation>();
   const [loading, setLoading] = useState(true);
@@ -49,7 +55,7 @@ export default function ProfileScreen() {
   }, [user]);
 
   async function onLogout() {
-    await clearUser();
+    await clearAuthStorage();
     navigation.reset({
       index: 0,
       routes: [{ name: "Login" }],
@@ -57,13 +63,18 @@ export default function ProfileScreen() {
   }
 
   return (
-    <LinearGradient colors={[colors.bg, colors.bgSoft]} style={styles.container}>
+    <LinearGradient colors={[colors.bg, "#17161D", colors.bgSoft]} style={styles.container}>
+      <View style={[styles.glow, styles.glowOne]} />
+      <View style={[styles.glow, styles.glowTwo]} />
+
       <View style={styles.header}>
-        <Pressable onPress={() => navigation.goBack()} style={styles.iconButton}>
+        <Pressable onPress={() => navigation.goBack()} style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}>
           <Ionicons name="chevron-back" size={18} color={colors.text} />
         </Pressable>
         <Text style={styles.title}>Profile</Text>
-        <View style={styles.headerSpacer} />
+        <Pressable style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}>
+          <Ionicons name="settings-outline" size={18} color={colors.text} />
+        </Pressable>
       </View>
 
       {loading ? (
@@ -82,6 +93,18 @@ export default function ProfileScreen() {
             <Image source={avatar} style={styles.avatar} />
             <Text style={styles.name}>{displayName}</Text>
             <Text style={styles.email}>{user.email || "-"}</Text>
+            <View style={styles.memberPill}>
+              <Text style={styles.memberPillText}>Elite Member</Text>
+            </View>
+          </View>
+
+          <View style={styles.quickStats}>
+            {quickStats.map((item) => (
+              <View key={item.label} style={styles.statCard}>
+                <Text style={styles.statValue}>{item.value}</Text>
+                <Text style={styles.statLabel}>{item.label}</Text>
+              </View>
+            ))}
           </View>
 
           <View style={styles.infoCard}>
@@ -90,14 +113,14 @@ export default function ProfileScreen() {
             <InfoRow label="Phone" value={user.phone || "-"} />
             <InfoRow label="Gender" value={user.gender || "-"} />
             <InfoRow label="DOB" value={user.date_of_birth || "-"} />
-            <InfoRow
-              label="Height"
-              value={user.height_cm ? `${user.height_cm} cm` : "-"}
-            />
-            <InfoRow
-              label="Weight"
-              value={user.weight_kg ? `${user.weight_kg} kg` : "-"}
-            />
+            <InfoRow label="Height" value={user.height_cm ? `${user.height_cm} cm` : "-"} />
+            <InfoRow label="Weight" value={user.weight_kg ? `${user.weight_kg} kg` : "-"} />
+          </View>
+
+          <View style={styles.actionCard}>
+            <ActionRow icon="notifications-outline" label="Push Notifications" />
+            <ActionRow icon="lock-closed-outline" label="Privacy & Security" />
+            <ActionRow icon="help-circle-outline" label="Help Center" />
           </View>
 
           <Pressable onPress={onLogout} style={({ pressed }) => [styles.logoutButton, pressed && styles.pressed]}>
@@ -119,9 +142,39 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+function ActionRow({ icon, label }: { icon: keyof typeof Ionicons.glyphMap; label: string }) {
+  return (
+    <Pressable style={({ pressed }) => [styles.actionRow, pressed && styles.pressed]}>
+      <View style={styles.actionIcon}>
+        <Ionicons name={icon} size={16} color={colors.text} />
+      </View>
+      <Text style={styles.actionLabel}>{label}</Text>
+      <Ionicons name="chevron-forward" size={16} color={colors.muted} />
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  glow: {
+    position: "absolute",
+    borderRadius: radius.pill,
+  },
+  glowOne: {
+    top: -170,
+    right: -140,
+    width: 320,
+    height: 320,
+    backgroundColor: "rgba(240, 51, 24, 0.22)",
+  },
+  glowTwo: {
+    bottom: -170,
+    left: -120,
+    width: 320,
+    height: 320,
+    backgroundColor: "rgba(247, 213, 167, 0.16)",
   },
   header: {
     paddingHorizontal: spacing.lg,
@@ -137,7 +190,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surface,
+    backgroundColor: "rgba(35, 34, 41, 0.85)",
     alignItems: "center",
     justifyContent: "center",
     ...shadows.sm,
@@ -146,12 +199,9 @@ const styles = StyleSheet.create({
     ...typography.h3,
     color: colors.text,
   },
-  headerSpacer: {
-    width: 40,
-  },
   content: {
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xl,
+    paddingBottom: spacing.xxl,
     gap: spacing.lg,
   },
   center: {
@@ -162,7 +212,7 @@ const styles = StyleSheet.create({
   },
   centerCard: {
     margin: spacing.lg,
-    backgroundColor: colors.surface,
+    backgroundColor: "rgba(35, 34, 41, 0.92)",
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
@@ -176,7 +226,7 @@ const styles = StyleSheet.create({
   profileCard: {
     marginTop: spacing.sm,
     alignItems: "center",
-    backgroundColor: colors.surface,
+    backgroundColor: "rgba(35, 34, 41, 0.92)",
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
@@ -184,9 +234,9 @@ const styles = StyleSheet.create({
     ...shadows.md,
   },
   avatar: {
-    width: 82,
-    height: 82,
-    borderRadius: 41,
+    width: 84,
+    height: 84,
+    borderRadius: 42,
     marginBottom: spacing.sm,
   },
   name: {
@@ -198,8 +248,43 @@ const styles = StyleSheet.create({
     color: colors.muted,
     marginTop: spacing.xxs,
   },
+  memberPill: {
+    marginTop: spacing.sm,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: "rgba(247, 213, 167, 0.42)",
+    backgroundColor: "rgba(247, 213, 167, 0.14)",
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs,
+  },
+  memberPillText: {
+    ...typography.small,
+    color: colors.accent,
+  },
+  quickStats: {
+    flexDirection: "row",
+    gap: spacing.sm,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: "rgba(35, 34, 41, 0.92)",
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    padding: spacing.sm,
+    ...shadows.sm,
+  },
+  statValue: {
+    ...typography.h3,
+    color: colors.text,
+  },
+  statLabel: {
+    ...typography.small,
+    color: colors.muted,
+    marginTop: spacing.xxs,
+  },
   infoCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: "rgba(35, 34, 41, 0.92)",
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
@@ -225,6 +310,35 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: "right",
   },
+  actionCard: {
+    backgroundColor: "rgba(35, 34, 41, 0.92)",
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.sm,
+    ...shadows.md,
+  },
+  actionRow: {
+    minHeight: 54,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  actionIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "rgba(240, 51, 24, 0.24)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  actionLabel: {
+    ...typography.caption,
+    color: colors.text,
+    flex: 1,
+  },
   cardTitle: {
     ...typography.h3,
     color: colors.text,
@@ -234,8 +348,8 @@ const styles = StyleSheet.create({
     minHeight: 50,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: "rgba(238, 99, 82, 0.5)",
-    backgroundColor: "rgba(238, 99, 82, 0.22)",
+    borderColor: "rgba(238, 99, 82, 0.54)",
+    backgroundColor: "rgba(238, 99, 82, 0.2)",
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
@@ -247,6 +361,6 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   pressed: {
-    opacity: 0.92,
+    opacity: 0.9,
   },
 });
